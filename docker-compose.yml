@@ -1,12 +1,23 @@
 version: "3.9"
 services:
+  # Frontend service is exposed to the outside world
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.dev
+      args:
+        - NEXT_PUBLIC_BACKEND_URL=backend
+        - NEXT_PUBLIC_BACKEND_PORT=${NEXT_PUBLIC_BACKEND_PORT}
+      dockerfile: prod-without-multistage.Dockerfile
     container_name: frontend
     ports:
       - "3000:3000"
+    restart: always
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  #Backend service is not exposed to the outside world
   backend:
     build:
       context: ./backend
@@ -14,15 +25,36 @@ services:
     container_name: backend
     ports:
       - "8000:8000"
+    restart: always
+    depends_on:
+      - redis
+    networks:
+      - app-network
+
+  # Redis service is not exposed to the outside world
   redis:
     image: "redis:alpine"
     container_name: redis
     ports:
       - "6379:6379"
+    restart: always
+    networks:
+      - app-network
+
+  # Nginx service is exposed to the outside world
   nginx:
     image: "nginx:alpine"
     container_name: nginx
     ports:
       - "80:80"
+    restart: always
     volumes:
       - "./nginx.conf:/etc/nginx/nginx.conf"
+    depends_on:
+      - frontend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
