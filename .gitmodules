@@ -1,3 +1,6 @@
 [submodule "backend"]
 	path = backend
 	url = git@github.com:3dln/nodejs-template.git
+[submodule "frontend-template"]
+	path = frontend
+	url = git@github.com:3dln/frontend-template.git
